@@ -1,7 +1,5 @@
 package me.txmc.lvq.listeners;
 
-import com.nickuc.login.api.nLoginAPI;
-import com.nickuc.login.api.types.Identity;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.Player;
@@ -30,10 +28,9 @@ public class PreConnectListener implements Reloadable {
     @Subscribe
     public void onPreConnect(ServerPreConnectEvent event) {
         Player player = event.getPlayer();
-        Identity nlId = Identity.ofKnownName(player.getUsername());
         RegisteredServer server = event.getOriginalServer();
         if (player.hasPermission("lvq.bypass")) return;
-        if (nLoginAPI.getApi().isAuthenticated(nlId) && server.getServerInfo().getName().equals(mainServer.getServerInfo().getName()) && !plugin.doesServerHaveSlot()) {
+        if (server.getServerInfo().getName().equals(mainServer.getServerInfo().getName()) && !plugin.doesServerHaveSlot()) {
             sendMessage(player, serverFullMessasge);
             if (player.hasPermission("lvq.priority")) {
                 prioQueue.addToQueue(player);
