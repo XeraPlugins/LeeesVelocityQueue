@@ -46,13 +46,6 @@ The final JAR will be located in the `target/` directory.
 
 ---
 
-## 📃 Configuration
-
-A sample configuration file will be generated on first run.  
-You can customize queue messages, priority levels, and more.
-
----
-
 ## 🤝 Contributions
 
 Pull requests are welcome!  
