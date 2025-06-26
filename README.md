@@ -1,4 +1,4 @@
-# LeeesVelocityQueuehttps://github.com/XeraPlugins/LeeesVelocityQueue/blob/master/README.md
+# LeeesVelocityQueue
 
 A lightweight and performant **2b2t-style queue plugin for [Velocity](https://velocitypowered.com/)**.  
 Designed for large servers with high traffic, **LeeesVelocityQueue** ensures orderly player login with support for priority and admin bypass.
