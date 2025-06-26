@@ -42,7 +42,7 @@ The final JAR will be located in the `target/` directory.
 1. Download the latest build.
 2. Place the JAR in your **Velocity plugins folder**.
 3. Restart your proxy server.
-4. Configure `config.toml` as needed.
+4. Configure `config.yml` as needed.
 
 ---
 
