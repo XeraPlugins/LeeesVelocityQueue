@@ -53,17 +53,6 @@ You can customize queue messages, priority levels, and more.
 
 ---
 
-## 🧠 Usage Example
-
-Let regular users wait in queue, while trusted users with `lvq.priority` skip ahead:
-
-```toml
-# Example config.toml snippet
-priority-roles = ["vip", "staff"]
-```
-
----
-
 ## 🤝 Contributions
 
 Pull requests are welcome!  
