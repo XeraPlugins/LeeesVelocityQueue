@@ -1,6 +1,0 @@
-name: leeesvelocityqueue-paper
-author: 254n_m
-version: ${project.parent.version}
-main: me.txmc.lvq.Main
-depend:
-  - nLogin
