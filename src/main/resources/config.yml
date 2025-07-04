@@ -1,0 +1,47 @@
+#LeeesVelocityQueue Version: 1.0.1 RELEASE
+queue-server: "queue"
+main-server: "main"
+main-server-slots: 200
+messages:
+  interval: 10 #In seconds
+  server-full: "&66b6t is full"
+  queue-position: "&6Position in queue: &l%d"
+  queue-end: "&6Connecting to 6b6t..."
+#this shows the queue size when you hover over the ping on the server list
+custom-query:
+  enable: true
+  query:
+    - "&b6b&36t &8Queue Info"
+    - "&8Priority: &l%priority%"
+    - "&8Regular: &l%regular%"
+    - "&8Total in queue: &l%totalinqueue%"
+    - "&8Max players on main server: &l%maxplayers%"
+    - "&8Donate to receive priority queue at &chttps://donate.8b8t.me"
+  protocol-message: "&b6b&36t &81.7.X to 1.21.X"
+  #-1 for +1 mode i.e 30/31 online
+  max-players: -1
+tablist:
+  header:
+    - ""
+    - "&b6builders&36tools"
+    - ""
+    - "&66b6t is full"
+    - "Position in queue: &l%position%"
+    - "&6Estimated time: &l%wait%"
+    - ""
+  priority-queue-footer:
+    - ""
+    - "&6You have priority queue status please wait for an available slot on the server"
+    - "&7Contact: contact@8b8t.me"
+    - "&7Discussion: http://discord.6b6t.ca"
+    - "&7Website: https://www.6b6t.ca"
+    - "&7These are the only official 6b6t websites and contacts"
+    - ""
+  normal-queue-footer:
+    - ""
+    - "&7You can now donate to receive priority queue status, please visit donate.6b6t.ca"
+    - "&7Contact: contact@8b8t.me"
+    - "&7Discussion: http://discord.6b6t.ca"
+    - "&7Website: https://www.6b6t.ca"
+    - "&7These are the only official 6b6t websites and contacts"
+    - ""
