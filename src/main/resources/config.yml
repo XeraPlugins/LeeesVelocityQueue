@@ -1,6 +1,6 @@
 #LeeesVelocityQueue Version: 1.0.1 RELEASE
 queue-server: "queue"
-main-server: "main"
+main-server: "6b6t"
 main-server-slots: 200
 messages:
   interval: 10 #In seconds
@@ -32,6 +32,7 @@ tablist:
   priority-queue-footer:
     - ""
     - "&6You have priority queue status please wait for an available slot on the server"
+    - ""
     - "&7Contact: contact@8b8t.me"
     - "&7Discussion: http://discord.6b6t.ca"
     - "&7Website: https://www.6b6t.ca"
@@ -39,7 +40,8 @@ tablist:
     - ""
   normal-queue-footer:
     - ""
-    - "&7You can now donate to receive priority queue status, please visit donate.6b6t.ca"
+    - "&6You can now donate to receive priority queue status, please visit donate.6b6t.ca"
+    - ""
     - "&7Contact: contact@8b8t.me"
     - "&7Discussion: http://discord.6b6t.ca"
     - "&7Website: https://www.6b6t.ca"
