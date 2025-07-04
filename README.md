@@ -1,9 +1,7 @@
-
-![4455 (1)](https://github.com/user-attachments/assets/263e57b4-0073-4441-98e5-5ab506129261)
 # LeeesVelocityQueue
 
 A lightweight and performant **2b2t-style queue plugin for [Velocity](https://velocitypowered.com/)**.  
-Designed for large servers with high traffic, **LeeesVelocityQueue** ensures orderly player login with support for priority and admin bypass.
+Designed for large servers with high traffic, **LeeesVelocityQueue** ensures orderly player login with support for priority, admin bypass, and a simple configuration.
 
 ---
 
@@ -45,6 +43,13 @@ The final JAR will be located in the `target/` directory.
 2. Place the JAR in your **Velocity plugins folder**.
 3. Restart your proxy server.
 4. Configure `config.yml` as needed.
+
+---
+
+## 📃 Configuration
+
+A sample configuration file will be generated on first run.  
+You can customize queue messages, priority levels, and more.
 
 ---
 
