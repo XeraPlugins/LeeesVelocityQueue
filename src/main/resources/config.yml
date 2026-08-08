@@ -13,7 +13,7 @@ messages:
   queue-position: "&6Position in queue: &l%d" #Sent in chat, empty "" to disable the chat message
   queue-position-chat-enabled: true #Whether the chat position message is sent
   queue-position-hotbar: "&6Position in queue: &l%d" #Shown in the hotbar above the hotbar across
-  queue-position-hotbar-enabled: true #Whether the hotbar position message is shown
+  queue-position-hotbar-enabled: false #Whether the hotbar position message is shown
   queue-position-title: "&6Position in queue: &l%d" #Shown as a title on the middle of the screen
   queue-position-title-enabled: false #Whether the title position message is shown
   queue-end: "&6Connecting to 8b8t..."
