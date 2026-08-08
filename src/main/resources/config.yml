@@ -10,7 +10,10 @@ messages:
   server-full: "&r&68b8t is full"
   commands-blocked: "&cYou cannot use commands while in the queue"
   server-switch-blocked: "&cYou can only be on the queue server while in the queue"
-  queue-position: "&6Position in queue: &l%d"
+  queue-position: "&6Position in queue: &l%d" #Sent in chat, empty "" to disable the chat message
+  queue-position-chat-enabled: true #Whether the chat position message is sent
+  queue-position-hotbar: "&6Position in queue: &l%d" #Shown in the hotbar above the hotbar across, empty "" to disable
+  queue-position-title: "&6Position in queue: &l%d" #Shown as a title on the middle of the screen, empty "" to disable
   queue-end: "&6Connecting to 8b8t..."
 #this shows the queue size when you hover over the ping on the server list
 custom-query:
