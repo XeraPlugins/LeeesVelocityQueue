@@ -76,7 +76,7 @@ public class PreConnectListener implements Reloadable {
             if (!event.getServer().getServerInfo().getName().equals(plugin.getQueueServer().getServerInfo().getName())) return;
             if (!player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getQueueServer().getServerInfo().getName())).orElse(false)) return;
             sendMessage(player, serverFullMessage);
-        }).delay(Duration.ofMillis(1000)).schedule();
+        }).delay(Duration.ofMillis(500)).schedule();
     }
 
     private boolean isConfigured(RegisteredServer mainServer, RegisteredServer queueServer) {

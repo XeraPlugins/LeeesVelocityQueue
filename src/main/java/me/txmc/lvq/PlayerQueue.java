@@ -1,80 +1,55 @@
 package me.txmc.lvq;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerQueue {
-    private final ConcurrentHashMap<UUID, Integer> position;
+    private final List<UUID> order = new ArrayList<>();
+    private final Set<UUID> members = ConcurrentHashMap.newKeySet();
     private final Object lock = new Object();
-
-    public PlayerQueue() {
-        this.position = new ConcurrentHashMap<>();
-    }
-
-    public int decrementPosition(UUID uuid) {
-        synchronized (lock) {
-            position.computeIfPresent(uuid, (u, pos) -> {
-                if (pos > 1) return pos - 1;
-                return 1;
-            });
-            return getQueuePositionUnsafe(uuid);
-        }
-    }
 
     public void addToQueue(UUID uuid) {
         synchronized (lock) {
-            if (!position.containsKey(uuid)) {
-                position.put(uuid, position.size() + 1);
+            if (members.add(uuid)) {
+                order.add(uuid);
             }
         }
     }
 
     public int getQueuePosition(UUID uuid) {
-        Integer pos = position.get(uuid);
-        return pos == null ? -1 : pos;
+        synchronized (lock) {
+            int index = order.indexOf(uuid);
+            return index < 0 ? -1 : index + 1;
+        }
     }
 
     public void removeFromQueue(UUID uuid) {
         synchronized (lock) {
-            Integer pos = position.get(uuid);
-            if (pos != null && pos > 0) {
-                position.replaceAll((u, p) -> p > pos ? p - 1 : p);
+            if (members.remove(uuid)) {
+                order.remove(uuid);
             }
-            position.remove(uuid);
         }
     }
 
     public boolean isInQueue(UUID uuid) {
-        return position.containsKey(uuid);
+        return members.contains(uuid);
     }
 
-    public Set<UUID> getUUIDsInQueue() {
-        return position.keySet();
-    }
-
-    public int queueLength() {
-        return position.size();
-    }
-
-    public void rebuild() {
+    public List<UUID> getUUIDsInQueue() {
         synchronized (lock) {
-            List<UUID> sorted = position.entrySet().stream()
-                    .sorted(Comparator.comparingInt(Map.Entry::getValue))
-                    .map(Map.Entry::getKey)
-                    .toList();
-            int i = 1;
-            for (UUID uuid : sorted) {
-                position.put(uuid, i);
-            }
+            return new ArrayList<>(order);
         }
     }
 
-    private int getQueuePositionUnsafe(UUID uuid) {
-        Integer pos = position.get(uuid);
-        return pos == null ? -1 : pos;
+    public int queueLength() {
+        synchronized (lock) {
+            return order.size();
+        }
+    }
+
+    public void rebuild() {
     }
 }
