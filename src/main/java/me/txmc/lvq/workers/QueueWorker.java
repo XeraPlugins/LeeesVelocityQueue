@@ -18,11 +18,13 @@ import static me.txmc.lvq.util.MessageUtil.translateChars;
 
 public class QueueWorker implements Runnable, Reloadable {
     private static final long RETRY_DELAY_MS = 3000L;
+    private static final int MAX_RETRIES = 5;
     private final Main plugin;
     private final PlayerQueue normalQueue;
     private final PlayerQueue prioQueue;
     private final Set<Player> pendingTransfers = ConcurrentHashMap.newKeySet();
     private final Map<Player, Long> lastAttempt = new ConcurrentHashMap<>();
+    private final Map<Player, Integer> retryCount = new ConcurrentHashMap<>();
     private String queueEndMessage;
     private List<String> tabHeader;
     private TextComponent prioFooter;
@@ -72,10 +74,11 @@ public class QueueWorker implements Runnable, Reloadable {
             if (pendingTransfers.contains(player)) continue;
             if (prioQueue.isInQueue(player) || normalQueue.isInQueue(player)) continue;
             if (player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getMainServer().getServerInfo().getName())).orElse(false)) continue;
-            if (!serverHasSlot || isOnRetryCooldown(player)) {
+            if (!serverHasSlot) {
                 queuePlayer(player);
                 continue;
             }
+            if (isOnRetryCooldown(player)) continue;
             serverHasSlot = advanceToMainServer(player, null, serverHasSlot);
         }
     }
@@ -93,22 +96,42 @@ public class QueueWorker implements Runnable, Reloadable {
         } finally {
             pendingTransfers.remove(player);
         }
-        if (result == null) return plugin.doesServerHaveSlot();
+        if (result == null) {
+            handleFailedTransfer(player, queue);
+            return plugin.doesServerHaveSlot();
+        }
         switch (result.getStatus()) {
             case SUCCESS:
             case ALREADY_CONNECTED:
+                retryCount.remove(player);
                 if (queue != null) queue.removeFromQueue(player);
                 break;
             case CONNECTION_IN_PROGRESS:
             case CONNECTION_CANCELLED:
                 plugin.getLogger().atInfo().log("{} transfer was cancelled, will retry shortly", player.getUsername());
+                handleFailedTransfer(player, queue);
                 break;
             case SERVER_DISCONNECTED:
             default:
                 plugin.getLogger().atWarn().log("Connection to the main server failed with status {}, keeping {} in the queue", result.getStatus(), player.getUsername());
+                handleFailedTransfer(player, queue);
                 break;
         }
         return plugin.doesServerHaveSlot();
+    }
+
+    private void handleFailedTransfer(Player player, PlayerQueue queue) {
+        int attempts = retryCount.merge(player, 1, Integer::sum);
+        if (attempts >= MAX_RETRIES) {
+            retryCount.remove(player);
+            if (queue != null) {
+                queue.removeFromQueue(player);
+                queue.addToQueue(player);
+            } else {
+                queuePlayer(player);
+            }
+            plugin.getLogger().atWarn().log("Giving up after {} attempts, requeued {}", MAX_RETRIES, player.getUsername());
+        }
     }
 
     private void queuePlayer(Player player) {
