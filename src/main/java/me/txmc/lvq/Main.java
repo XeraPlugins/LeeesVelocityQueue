@@ -31,7 +31,7 @@ import java.util.List;
 
 @Plugin(id = "leeesvelocityqueue",
         name = "LeeesVelocityQueue",
-        version = "1.0.1-RELEASE", description = "A 2b2t like queue plugin for Velocity",
+        version = "1.1.1-RELEASE", description = "A 2b2t like queue plugin for Velocity",
         authors = {"254n_m", "Leeewith3Es"})
 public class Main implements Reloadable{
     @Getter private final ProxyServer server;
