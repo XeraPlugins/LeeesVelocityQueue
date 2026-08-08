@@ -84,6 +84,7 @@ public class QueueWorker implements Runnable, Reloadable {
                 cleanupPlayer(uuid);
             }
         }
+        queue.rebuild();
     }
 
     private boolean isOnJoinGrace(UUID uuid) {
