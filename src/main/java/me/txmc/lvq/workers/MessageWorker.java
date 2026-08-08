@@ -13,7 +13,7 @@ import static me.txmc.lvq.util.MessageUtil.translateChars;
 
 public class MessageWorker implements Runnable, Reloadable {
     private static final Duration TITLE_FADE_IN = Duration.ofMillis(200L);
-    private static final Duration TITLE_STAY = Duration.ofSeconds(2L);
+    private static final Duration TITLE_STAY = Duration.ofMillis(1200L);
     private static final Duration TITLE_FADE_OUT = Duration.ofMillis(400L);
     private final Main plugin;
     private final PlayerQueue prioQueue;
@@ -35,19 +35,27 @@ public class MessageWorker implements Runnable, Reloadable {
         prioQueue.getUUIDsInQueue().forEach(uuid ->
                 plugin.getServer().getPlayer(uuid).ifPresent(p -> {
                     if (!plugin.getServerFullSent().contains(uuid)) return;
-                    sendPositionMessages(p, prioQueue.getQueuePosition(uuid));
+                    if (queuePositionChatEnabled && queuePositionMessage != null && !queuePositionMessage.isEmpty()) {
+                        sendMessage(p, queuePositionMessage, prioQueue.getQueuePosition(uuid));
+                    }
                 }));
         normalQueue.getUUIDsInQueue().forEach(uuid ->
                 plugin.getServer().getPlayer(uuid).ifPresent(p -> {
                     if (!plugin.getServerFullSent().contains(uuid)) return;
-                    sendPositionMessages(p, normalQueue.getQueuePosition(uuid));
+                    if (queuePositionChatEnabled && queuePositionMessage != null && !queuePositionMessage.isEmpty()) {
+                        sendMessage(p, queuePositionMessage, normalQueue.getQueuePosition(uuid));
+                    }
                 }));
     }
 
-    private void sendPositionMessages(Player player, int position) {
-        if (queuePositionChatEnabled && queuePositionMessage != null && !queuePositionMessage.isEmpty()) {
-            sendMessage(player, queuePositionMessage, position);
+    public void showPosition(Player player) {
+        int position = -1;
+        if (prioQueue.isInQueue(player.getUniqueId())) {
+            position = prioQueue.getQueuePosition(player.getUniqueId());
+        } else if (normalQueue.isInQueue(player.getUniqueId())) {
+            position = normalQueue.getQueuePosition(player.getUniqueId());
         }
+        if (position < 0) return;
         if (queuePositionHotbar != null && !queuePositionHotbar.isEmpty()) {
             player.sendActionBar(translateChars(String.format(queuePositionHotbar, position)));
         }
@@ -59,6 +67,13 @@ public class MessageWorker implements Runnable, Reloadable {
             );
             player.showTitle(title);
         }
+    }
+
+    public void refreshAll() {
+        prioQueue.getUUIDsInQueue().forEach(uuid ->
+                plugin.getServer().getPlayer(uuid).ifPresent(this::showPosition));
+        normalQueue.getUUIDsInQueue().forEach(uuid ->
+                plugin.getServer().getPlayer(uuid).ifPresent(this::showPosition));
     }
 
     @Override

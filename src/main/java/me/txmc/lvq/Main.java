@@ -48,6 +48,7 @@ public class Main implements Reloadable{
     @Getter private boolean alwaysQueue;
     @Getter private boolean requeueOnMainKick;
     @Getter private QueueWorker queueWorker;
+    @Getter private MessageWorker messageWorker;
     @Getter private final List<Reloadable> reloadables;
 
     @Getter private final Set<UUID> serverFullSent = ConcurrentHashMap.newKeySet();
@@ -55,6 +56,7 @@ public class Main implements Reloadable{
     private long lastMainOfflineWarn;
     private ScheduledTask queueNotifyTask;
     private ScheduledTask messageTask;
+    private ScheduledTask hotbarTitleTask;
     private File configFile;
     private int messageInterval;
 
@@ -83,12 +85,15 @@ public class Main implements Reloadable{
         server.getCommandManager().register(server.getCommandManager().metaBuilder("lvq").plugin(this).build(), new LvqCommand(this));
         queueWorker = new QueueWorker(this);
         queueNotifyTask = server.getScheduler().buildTask(this, queueWorker).repeat(Duration.ofSeconds(1)).schedule();
-        messageTask = server.getScheduler().buildTask(this, (Runnable) registerReloadable(new MessageWorker(this))).repeat(Duration.ofSeconds(messageInterval)).schedule();
+        messageWorker = new MessageWorker(this);
+        messageTask = server.getScheduler().buildTask(this, (Runnable) registerReloadable(messageWorker)).repeat(Duration.ofSeconds(messageInterval)).schedule();
+        hotbarTitleTask = server.getScheduler().buildTask(this, messageWorker::refreshAll).repeat(Duration.ofMillis(100)).schedule();
     }
     @Subscribe
     public void onShutdown(ProxyShutdownEvent event) {
         queueNotifyTask.cancel();
         messageTask.cancel();
+        hotbarTitleTask.cancel();
         reloadables.clear();
     }
     private Object registerReloadable(Reloadable r) {
@@ -125,6 +130,9 @@ public class Main implements Reloadable{
         alwaysQueue = getConfig().node("always-queue").getBoolean(false);
         requeueOnMainKick = getConfig().node("requeue-on-main-kick").getBoolean(true);
         messageInterval = getConfig().node("messages", "interval").getInt();
+    }
+    public void showPositionMessage(Player player) {
+        if (messageWorker != null) messageWorker.showPosition(player);
     }
     public boolean doesServerHaveSlot() {
         try {

@@ -205,6 +205,7 @@ public class QueueWorker implements Runnable, Reloadable {
         } else {
             normalQueue.addToQueue(player.getUniqueId());
         }
+        plugin.showPositionMessage(player);
     }
 
     @Override
