@@ -199,6 +199,7 @@ public class QueueWorker implements Runnable, Reloadable {
     }
 
     private void queuePlayer(Player player) {
+        plugin.getServerFullSent().add(player.getUniqueId());
         if (player.hasPermission("lvq.priority")) {
             prioQueue.addToQueue(player.getUniqueId());
         } else {

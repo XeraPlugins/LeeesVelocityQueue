@@ -51,6 +51,8 @@ public class Main implements Reloadable{
     @Getter private final List<Reloadable> reloadables;
 
     @Getter private final Set<UUID> serverFullSent = ConcurrentHashMap.newKeySet();
+    private static final long MAIN_OFFLINE_WARN_INTERVAL_MS = 5000L;
+    private long lastMainOfflineWarn;
     private ScheduledTask queueNotifyTask;
     private ScheduledTask messageTask;
     private File configFile;
@@ -131,7 +133,11 @@ public class Main implements Reloadable{
             if (players == null) return false;
             return players.getOnline() < maxSlots;
         } catch (Throwable t) {
-            getLogger().atWarn().setCause(t).log("Failed to ping the main server to check for an available slot");
+            long now = System.currentTimeMillis();
+            if (now - lastMainOfflineWarn >= MAIN_OFFLINE_WARN_INTERVAL_MS) {
+                lastMainOfflineWarn = now;
+                getLogger().atWarn().log("The main server is offline, players will be queued");
+            }
             return false;
         }
     }
