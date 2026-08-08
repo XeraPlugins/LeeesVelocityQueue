@@ -26,6 +26,8 @@ public class QueueWorker implements Runnable, Reloadable {
     private final Set<UUID> pendingTransfers = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Long> lastAttempt = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> retryCount = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> joinQueue = new ConcurrentHashMap<>();
+    private long queueGraceMs;
     private String queueEndMessage;
     private List<String> tabHeader;
     private TextComponent prioFooter;
@@ -58,6 +60,7 @@ public class QueueWorker implements Runnable, Reloadable {
         pendingTransfers.remove(uuid);
         lastAttempt.remove(uuid);
         retryCount.remove(uuid);
+        joinQueue.remove(uuid);
     }
 
     private void processQueue(PlayerQueue queue, TextComponent footer) {
@@ -67,9 +70,15 @@ public class QueueWorker implements Runnable, Reloadable {
             if (player == null) continue;
             int queuePos = queue.getQueuePosition(uuid);
             player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
+            if (isOnJoinGrace(uuid)) continue;
             if (queuePos != 1 || !serverHasSlot || pendingTransfers.contains(uuid) || isOnRetryCooldown(uuid)) continue;
             serverHasSlot = advanceToMainServer(player, queue, serverHasSlot);
         }
+    }
+
+    private boolean isOnJoinGrace(UUID uuid) {
+        joinQueue.computeIfAbsent(uuid, u -> System.currentTimeMillis());
+        return System.currentTimeMillis() - joinQueue.get(uuid) < queueGraceMs;
     }
 
     private boolean isOnRetryCooldown(UUID uuid) {
@@ -90,6 +99,7 @@ public class QueueWorker implements Runnable, Reloadable {
                 continue;
             }
             if (isOnRetryCooldown(uuid)) continue;
+            if (isOnJoinGrace(uuid)) continue;
             serverHasSlot = advanceToMainServer(player, null, serverHasSlot);
         }
     }
@@ -116,6 +126,7 @@ public class QueueWorker implements Runnable, Reloadable {
             case SUCCESS:
             case ALREADY_CONNECTED:
                 retryCount.remove(uuid);
+                joinQueue.remove(uuid);
                 if (queue != null) queue.removeFromQueue(uuid);
                 break;
             case CONNECTION_IN_PROGRESS:
@@ -137,6 +148,7 @@ public class QueueWorker implements Runnable, Reloadable {
         int attempts = retryCount.merge(uuid, 1, Integer::sum);
         if (attempts >= MAX_RETRIES) {
             retryCount.remove(uuid);
+            joinQueue.remove(uuid);
             if (queue != null) {
                 queue.removeFromQueue(uuid);
                 queue.addToQueue(uuid);
@@ -158,6 +170,7 @@ public class QueueWorker implements Runnable, Reloadable {
     @Override
     public void reloadConfig() {
         try {
+            queueGraceMs = plugin.getConfig().node("queue-grace-ms").getLong(5000L);
             queueEndMessage = plugin.getConfig().node("messages", "queue-end").getString();
             tabHeader = plugin.getConfig().node("tablist", "header").getList(String.class);
             prioFooter = parseFooter(plugin.getConfig().node("tablist", "priority-queue-footer").getList(String.class));

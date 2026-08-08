@@ -3,6 +3,7 @@ queue-server: "queue"
 main-server: "8b8t"
 main-server-slots: 400
 always-queue: true #When true, players will always be queued even when the main server is not full
+queue-grace-ms: 5000 #Delay in milliseconds before a player is sent from the queue server to the main server
 messages:
   interval: 10 #In seconds
   server-full: "&r&68b8t is full"
