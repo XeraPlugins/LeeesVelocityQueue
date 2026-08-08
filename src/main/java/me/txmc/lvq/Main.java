@@ -129,7 +129,7 @@ public class Main implements Reloadable{
         maxSlots = getConfig().node("main-server-slots").getInt();
         alwaysQueue = getConfig().node("always-queue").getBoolean(false);
         requeueOnMainKick = getConfig().node("requeue-on-main-kick").getBoolean(true);
-        messageInterval = getConfig().node("messages", "interval").getInt();
+        messageInterval = getConfig().node("messages", "queue-position-chat-interval").getInt(10);
     }
     public void showPositionMessage(Player player) {
         if (messageWorker != null) messageWorker.showPosition(player);

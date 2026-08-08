@@ -6,16 +6,16 @@ always-queue: true #When true, players will always be queued even when the main 
 requeue-on-main-kick: true #When true, players kicked from the main server are re-added to the queue (covers main server going down)
 queue-grace-ms: 3000 #Delay in milliseconds before a player is sent from the queue server to the main server
 messages:
-  interval: 10 #In seconds
-  server-full: "&r&68b8t is full"
-  commands-blocked: "&cYou cannot use commands while in the queue"
-  server-switch-blocked: "&cYou can only be on the queue server while in the queue"
-  queue-position: "&6Position in queue: &l%d" #Sent in chat, empty "" to disable the chat message
+  queue-position: "&6Position in queue: &l%d" #Sent in chat every queue-position-chat-interval seconds, empty "" to disable the chat message
   queue-position-chat-enabled: true #Whether the chat position message is sent
+  queue-position-chat-interval: 10 #Time in seconds between chat position messages
   queue-position-hotbar: "&6Position in queue: &l%d" #Shown in the hotbar above the hotbar across
   queue-position-hotbar-enabled: false #Whether the hotbar position message is shown
   queue-position-title: "&6Position in queue: &l%d" #Shown as a title on the middle of the screen
   queue-position-title-enabled: false #Whether the title position message is shown
+  server-full: "&r&68b8t is full"
+  commands-blocked: "&cYou cannot use commands while in the queue"
+  server-switch-blocked: "&cYou can only be on the queue server while in the queue"
   queue-end: "&6Connecting to 8b8t..."
 #this shows the queue size when you hover over the ping on the server list
 custom-query:
