@@ -1,5 +1,6 @@
 package me.txmc.lvq.workers;
 
+import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
 import me.txmc.lvq.Main;
 import me.txmc.lvq.PlayerQueue;
@@ -8,6 +9,8 @@ import me.txmc.lvq.util.Utils;
 import net.kyori.adventure.text.TextComponent;
 
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static me.txmc.lvq.util.MessageUtil.sendMessage;
 import static me.txmc.lvq.util.MessageUtil.translateChars;
@@ -16,6 +19,7 @@ public class QueueWorker implements Runnable, Reloadable {
     private final Main plugin;
     private final PlayerQueue normalQueue;
     private final PlayerQueue prioQueue;
+    private final Set<Player> pendingTransfers = ConcurrentHashMap.newKeySet();
     private String queueEndMessage;
     private List<String> tabHeader;
     private TextComponent prioFooter;
@@ -33,6 +37,7 @@ public class QueueWorker implements Runnable, Reloadable {
         try {
             processQueue(prioQueue, prioFooter);
             processQueue(normalQueue, normalFooter);
+            resendPlayersInQueueServer();
         } catch (Throwable t) {
             plugin.getLogger().atWarn().setCause(t).log("Queue worker encountered an unexpected error, continuing next tick");
         }
@@ -43,19 +48,57 @@ public class QueueWorker implements Runnable, Reloadable {
         for (Player player : queue.getPlayersInQueue()) {
             int queuePos = queue.getQueuePosition(player);
             player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
-            if (queuePos == 1) {
-                if (!serverHasSlot) continue;
-                sendMessage(player, queueEndMessage);
-                queue.removeFromQueue(player);
-                try {
-                    player.createConnectionRequest(plugin.getMainServer()).connect().join();
-                } catch (Throwable t) {
-                    plugin.getLogger().atWarn().setCause(t).log("Failed to connect {} to the main server, requeueing them", player.getUsername());
-                    queue.addToQueue(player);
-                }
-                serverHasSlot = plugin.doesServerHaveSlot();
-                break;
+            if (queuePos != 1 || !serverHasSlot || pendingTransfers.contains(player)) continue;
+            serverHasSlot = advanceToMainServer(player, queue, serverHasSlot);
+        }
+    }
+
+    private void resendPlayersInQueueServer() {
+        boolean serverHasSlot = plugin.doesServerHaveSlot();
+        for (Player player : plugin.getQueueServer().getPlayersConnected()) {
+            if (player.hasPermission("lvq.bypass")) continue;
+            if (pendingTransfers.contains(player)) continue;
+            if (prioQueue.isInQueue(player) || normalQueue.isInQueue(player)) continue;
+            if (player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getMainServer().getServerInfo().getName())).orElse(false)) continue;
+            if (serverHasSlot) {
+                serverHasSlot = advanceToMainServer(player, null, serverHasSlot);
+            } else {
+                queuePlayer(player);
             }
+        }
+    }
+
+    private boolean advanceToMainServer(Player player, PlayerQueue queue, boolean serverHasSlot) {
+        sendMessage(player, queueEndMessage);
+        pendingTransfers.add(player);
+        ConnectionRequestBuilder.Result result;
+        try {
+            result = player.createConnectionRequest(plugin.getMainServer()).connect().join();
+        } catch (Throwable t) {
+            plugin.getLogger().atWarn().setCause(t).log("Failed to connect {} to the main server, requeueing them", player.getUsername());
+            result = null;
+        } finally {
+            pendingTransfers.remove(player);
+        }
+        if (result != null && result.isSuccessful()) {
+            if (queue != null) queue.removeFromQueue(player);
+        } else {
+            plugin.getLogger().atWarn().log("Connection to the main server failed with status {}, requeueing {}", result == null ? "exception" : result.getStatus(), player.getUsername());
+            if (queue != null) {
+                queue.removeFromQueue(player);
+                queue.addToQueue(player);
+            } else {
+                queuePlayer(player);
+            }
+        }
+        return plugin.doesServerHaveSlot();
+    }
+
+    private void queuePlayer(Player player) {
+        if (player.hasPermission("lvq.priority")) {
+            prioQueue.addToQueue(player);
+        } else {
+            normalQueue.addToQueue(player);
         }
     }
 
