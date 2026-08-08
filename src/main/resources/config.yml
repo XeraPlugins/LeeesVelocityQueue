@@ -1,4 +1,4 @@
-#LeeesVelocityQueue Version: 1.1.1 RELEASE
+#LeeesVelocityQueue Version: 1.2.0 RELEASE
 queue-server: "queue"
 main-server: "8b8t"
 main-server-slots: 400

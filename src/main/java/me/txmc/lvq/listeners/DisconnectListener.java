@@ -2,32 +2,28 @@ package me.txmc.lvq.listeners;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
-import com.velocitypowered.api.event.player.KickedFromServerEvent;
-import com.velocitypowered.api.proxy.Player;
 import me.txmc.lvq.Main;
 import me.txmc.lvq.PlayerQueue;
 
+import java.util.UUID;
+
 public class DisconnectListener {
+    private final Main plugin;
     private final PlayerQueue normalQueue;
     private final PlayerQueue prioQueue;
 
     public DisconnectListener(Main plugin) {
+        this.plugin = plugin;
         normalQueue = plugin.getNormalQueue();
         prioQueue = plugin.getPrioQueue();
     }
 
-
     @Subscribe
     public void onDisconnect(DisconnectEvent event) {
-        onDisconnect(event.getPlayer());
-    }
+        UUID uuid = event.getPlayer().getUniqueId();
 
-    @Subscribe
-    public void onKick(KickedFromServerEvent event) {
-        onDisconnect(event.getPlayer());
-    }
-    private void onDisconnect(Player player) {
-        if (prioQueue.isInQueue(player)) prioQueue.removeFromQueue(player);
-        if (normalQueue.isInQueue(player)) normalQueue.removeFromQueue(player);
+        prioQueue.removeFromQueue(uuid);
+        normalQueue.removeFromQueue(uuid);
+        plugin.getQueueWorker().cleanupPlayer(uuid);
     }
 }

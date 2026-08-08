@@ -33,12 +33,12 @@ public class PreConnectListener implements Reloadable {
         Player player = event.getPlayer();
         RegisteredServer server = event.getOriginalServer();
         if (player.hasPermission("lvq.bypass")) return;
-        boolean inQueue = prioQueue.isInQueue(player) || normalQueue.isInQueue(player);
+        boolean inQueue = prioQueue.isInQueue(player.getUniqueId()) || normalQueue.isInQueue(player.getUniqueId());
         String targetName = server.getServerInfo().getName();
         String queueName = plugin.getQueueServer().getServerInfo().getName();
         if (inQueue) {
             boolean advancingToMain = targetName.equals(mainServer.getServerInfo().getName())
-                    && plugin.getQueueWorker().isPendingTransfer(player);
+                    && plugin.getQueueWorker().isPendingTransfer(player.getUniqueId());
             if (!targetName.equals(queueName) && !advancingToMain) {
                 sendMessage(player, serverSwitchBlockedMessage);
                 event.setResult(ServerPreConnectEvent.ServerResult.denied());
@@ -49,8 +49,8 @@ public class PreConnectListener implements Reloadable {
             if (isOnQueueServer(player)) return;
             sendMessage(player, serverFullMessage);
             if (player.hasPermission("lvq.priority")) {
-                prioQueue.addToQueue(player);
-            } else normalQueue.addToQueue(player);
+                prioQueue.addToQueue(player.getUniqueId());
+            } else normalQueue.addToQueue(player.getUniqueId());
             event.setResult(ServerPreConnectEvent.ServerResult.allowed(plugin.getQueueServer()));
         }
     }
@@ -59,7 +59,7 @@ public class PreConnectListener implements Reloadable {
     public void onCommand(CommandExecuteEvent event) {
         if (!(event.getCommandSource() instanceof Player player)) return;
         if (player.hasPermission("lvq.bypass")) return;
-        if (prioQueue.isInQueue(player) || normalQueue.isInQueue(player)) {
+        if (prioQueue.isInQueue(player.getUniqueId()) || normalQueue.isInQueue(player.getUniqueId())) {
             sendMessage(player, commandsBlockedMessage);
             event.setResult(CommandExecuteEvent.CommandResult.denied());
         }

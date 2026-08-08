@@ -21,8 +21,12 @@ public class MessageWorker implements Runnable, Reloadable {
 
     @Override
     public void run() {
-        prioQueue.getPlayersInQueue().forEach(p -> sendMessage(p, queuePositionMessage, prioQueue.getQueuePosition(p)));
-        normalQueue.getPlayersInQueue().forEach(p -> sendMessage(p, queuePositionMessage, normalQueue.getQueuePosition(p)));
+        prioQueue.getUUIDsInQueue().forEach(uuid ->
+                plugin.getServer().getPlayer(uuid).ifPresent(p ->
+                        sendMessage(p, queuePositionMessage, prioQueue.getQueuePosition(uuid))));
+        normalQueue.getUUIDsInQueue().forEach(uuid ->
+                plugin.getServer().getPlayer(uuid).ifPresent(p ->
+                        sendMessage(p, queuePositionMessage, normalQueue.getQueuePosition(uuid))));
     }
 
     @Override

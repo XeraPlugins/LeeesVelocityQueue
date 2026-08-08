@@ -11,6 +11,7 @@ import net.kyori.adventure.text.TextComponent;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static me.txmc.lvq.util.MessageUtil.sendMessage;
@@ -22,9 +23,9 @@ public class QueueWorker implements Runnable, Reloadable {
     private final Main plugin;
     private final PlayerQueue normalQueue;
     private final PlayerQueue prioQueue;
-    private final Set<Player> pendingTransfers = ConcurrentHashMap.newKeySet();
-    private final Map<Player, Long> lastAttempt = new ConcurrentHashMap<>();
-    private final Map<Player, Integer> retryCount = new ConcurrentHashMap<>();
+    private final Set<UUID> pendingTransfers = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Long> lastAttempt = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> retryCount = new ConcurrentHashMap<>();
     private String queueEndMessage;
     private List<String> tabHeader;
     private TextComponent prioFooter;
@@ -48,22 +49,30 @@ public class QueueWorker implements Runnable, Reloadable {
         }
     }
 
-    public boolean isPendingTransfer(Player player) {
-        return pendingTransfers.contains(player);
+    public boolean isPendingTransfer(UUID uuid) {
+        return pendingTransfers.contains(uuid);
+    }
+
+    public void cleanupPlayer(UUID uuid) {
+        pendingTransfers.remove(uuid);
+        lastAttempt.remove(uuid);
+        retryCount.remove(uuid);
     }
 
     private void processQueue(PlayerQueue queue, TextComponent footer) {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
-        for (Player player : queue.getPlayersInQueue()) {
-            int queuePos = queue.getQueuePosition(player);
+        for (UUID uuid : queue.getUUIDsInQueue()) {
+            Player player = plugin.getServer().getPlayer(uuid).orElse(null);
+            if (player == null) continue;
+            int queuePos = queue.getQueuePosition(uuid);
             player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
-            if (queuePos != 1 || !serverHasSlot || pendingTransfers.contains(player) || isOnRetryCooldown(player)) continue;
+            if (queuePos != 1 || !serverHasSlot || pendingTransfers.contains(uuid) || isOnRetryCooldown(uuid)) continue;
             serverHasSlot = advanceToMainServer(player, queue, serverHasSlot);
         }
     }
 
-    private boolean isOnRetryCooldown(Player player) {
-        Long last = lastAttempt.get(player);
+    private boolean isOnRetryCooldown(UUID uuid) {
+        Long last = lastAttempt.get(uuid);
         return last != null && System.currentTimeMillis() - last < RETRY_DELAY_MS;
     }
 
@@ -71,22 +80,24 @@ public class QueueWorker implements Runnable, Reloadable {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
         for (Player player : plugin.getQueueServer().getPlayersConnected()) {
             if (player.hasPermission("lvq.bypass")) continue;
-            if (pendingTransfers.contains(player)) continue;
-            if (prioQueue.isInQueue(player) || normalQueue.isInQueue(player)) continue;
+            UUID uuid = player.getUniqueId();
+            if (pendingTransfers.contains(uuid)) continue;
+            if (prioQueue.isInQueue(uuid) || normalQueue.isInQueue(uuid)) continue;
             if (player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getMainServer().getServerInfo().getName())).orElse(false)) continue;
             if (!serverHasSlot) {
                 queuePlayer(player);
                 continue;
             }
-            if (isOnRetryCooldown(player)) continue;
+            if (isOnRetryCooldown(uuid)) continue;
             serverHasSlot = advanceToMainServer(player, null, serverHasSlot);
         }
     }
 
     private boolean advanceToMainServer(Player player, PlayerQueue queue, boolean serverHasSlot) {
-        lastAttempt.put(player, System.currentTimeMillis());
+        UUID uuid = player.getUniqueId();
+        lastAttempt.put(uuid, System.currentTimeMillis());
         sendMessage(player, queueEndMessage);
-        pendingTransfers.add(player);
+        pendingTransfers.add(uuid);
         ConnectionRequestBuilder.Result result;
         try {
             result = player.createConnectionRequest(plugin.getMainServer()).connect().join();
@@ -94,7 +105,7 @@ public class QueueWorker implements Runnable, Reloadable {
             plugin.getLogger().atWarn().setCause(t).log("Failed to connect {} to the main server, keeping them in the queue", player.getUsername());
             result = null;
         } finally {
-            pendingTransfers.remove(player);
+            pendingTransfers.remove(uuid);
         }
         if (result == null) {
             handleFailedTransfer(player, queue);
@@ -103,8 +114,8 @@ public class QueueWorker implements Runnable, Reloadable {
         switch (result.getStatus()) {
             case SUCCESS:
             case ALREADY_CONNECTED:
-                retryCount.remove(player);
-                if (queue != null) queue.removeFromQueue(player);
+                retryCount.remove(uuid);
+                if (queue != null) queue.removeFromQueue(uuid);
                 break;
             case CONNECTION_IN_PROGRESS:
             case CONNECTION_CANCELLED:
@@ -121,12 +132,13 @@ public class QueueWorker implements Runnable, Reloadable {
     }
 
     private void handleFailedTransfer(Player player, PlayerQueue queue) {
-        int attempts = retryCount.merge(player, 1, Integer::sum);
+        UUID uuid = player.getUniqueId();
+        int attempts = retryCount.merge(uuid, 1, Integer::sum);
         if (attempts >= MAX_RETRIES) {
-            retryCount.remove(player);
+            retryCount.remove(uuid);
             if (queue != null) {
-                queue.removeFromQueue(player);
-                queue.addToQueue(player);
+                queue.removeFromQueue(uuid);
+                queue.addToQueue(uuid);
             } else {
                 queuePlayer(player);
             }
@@ -136,9 +148,9 @@ public class QueueWorker implements Runnable, Reloadable {
 
     private void queuePlayer(Player player) {
         if (player.hasPermission("lvq.priority")) {
-            prioQueue.addToQueue(player);
+            prioQueue.addToQueue(player.getUniqueId());
         } else {
-            normalQueue.addToQueue(player);
+            normalQueue.addToQueue(player.getUniqueId());
         }
     }
 

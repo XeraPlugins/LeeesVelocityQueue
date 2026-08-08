@@ -1,40 +1,53 @@
 package me.txmc.lvq;
 
-import com.velocitypowered.api.proxy.Player;
-
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerQueue {
-    private final ConcurrentHashMap<Player, Integer> position;
+    private final ConcurrentHashMap<UUID, Integer> position;
+
     public PlayerQueue() {
         this.position = new ConcurrentHashMap<>();
     }
-    public int decrementPosition(Player player) {
-        position.computeIfPresent(player, (p, pos) -> {
+
+    public int decrementPosition(UUID uuid) {
+        position.computeIfPresent(uuid, (u, pos) -> {
             if (pos > 1) return pos - 1;
             return 1;
         });
-        return getQueuePosition(player);
+        return getQueuePosition(uuid);
     }
-    public void addToQueue(Player player) {
-        position.computeIfAbsent(player, (pos) -> position.size() + 1);
+
+    public void addToQueue(UUID uuid) {
+        position.computeIfAbsent(uuid, (u) -> position.size() + 1);
     }
-    public int getQueuePosition(Player player) {
-        return position.getOrDefault(player, -1);
+
+    public int getQueuePosition(UUID uuid) {
+        return position.getOrDefault(uuid, -1);
     }
-    public void removeFromQueue(Player player) {
-        int pos = getQueuePosition(player);
-        if (pos > 0) position.entrySet().stream().filter(e -> e.getValue() > pos).map(Map.Entry::getKey).toList().forEach(this::decrementPosition);
-        position.remove(player);
+
+    public void removeFromQueue(UUID uuid) {
+        int pos = getQueuePosition(uuid);
+        if (pos > 0) {
+            position.entrySet().stream()
+                    .filter(e -> e.getValue() > pos)
+                    .map(Map.Entry::getKey)
+                    .toList()
+                    .forEach(this::decrementPosition);
+        }
+        position.remove(uuid);
     }
-    public boolean isInQueue(Player player) {
-        return position.containsKey(player);
+
+    public boolean isInQueue(UUID uuid) {
+        return position.containsKey(uuid);
     }
-    public Set<Player> getPlayersInQueue() {
+
+    public Set<UUID> getUUIDsInQueue() {
         return position.keySet();
     }
+
     public int queueLength() {
         return position.size();
     }
