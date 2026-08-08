@@ -146,17 +146,20 @@ public class QueueWorker implements Runnable, Reloadable {
     private void handleFailedTransfer(Player player, PlayerQueue queue) {
         UUID uuid = player.getUniqueId();
         int attempts = retryCount.merge(uuid, 1, Integer::sum);
-        if (attempts >= MAX_RETRIES) {
-            retryCount.remove(uuid);
-            joinQueue.remove(uuid);
-            if (queue != null) {
-                queue.removeFromQueue(uuid);
-                queue.addToQueue(uuid);
-            } else {
-                queuePlayer(player);
-            }
-            plugin.getLogger().atWarn().log("Giving up after {} attempts, requeued {}", MAX_RETRIES, player.getUsername());
+        if (attempts < MAX_RETRIES) return;
+        retryCount.remove(uuid);
+        if (!plugin.doesServerHaveSlot()) {
+            plugin.getLogger().atInfo().log("{} could not be moved, main server unreachable, keeping {} at the front", player.getUsername(), player.getUsername());
+            return;
         }
+        joinQueue.remove(uuid);
+        if (queue != null) {
+            queue.removeFromQueue(uuid);
+            queue.addToQueue(uuid);
+        } else {
+            queuePlayer(player);
+        }
+        plugin.getLogger().atWarn().log("Giving up after {} attempts, requeued {}", MAX_RETRIES, player.getUsername());
     }
 
     private void queuePlayer(Player player) {
