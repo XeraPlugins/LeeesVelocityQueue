@@ -17,7 +17,7 @@ public class ProxyPingListener implements Reloadable {
     private final Main plugin;
     private List<String> playerList;
     private String versionName;
-    private int confMaxPlayers;
+    private Integer confMaxPlayers;
     Map<String, Supplier<Integer>> mappings;
     Pattern pattern = Pattern.compile("%(.*?)%");
 
@@ -35,9 +35,17 @@ public class ProxyPingListener implements Reloadable {
     public void onProxyPing(ProxyPingEvent event) {
         ServerPing og = event.getPing();
         int playerCount = plugin.getServer().getPlayerCount();
-        int maxPlayers = (confMaxPlayers == -1) ? playerCount + 1 : confMaxPlayers;
+        ServerPing.Version version = (versionName == null || versionName.isEmpty())
+                ? og.getVersion()
+                : new ServerPing.Version(og.getVersion().getProtocol(), legacyTranslate(versionName));
+        int maxPlayers;
+        if (confMaxPlayers == null) {
+            maxPlayers = og.getPlayers().map(ServerPing.Players::getMax).orElse(playerCount + 1);
+        } else {
+            maxPlayers = (confMaxPlayers == -1) ? playerCount + 1 : confMaxPlayers;
+        }
         ServerPing newPing = new ServerPing(
-                new ServerPing.Version(og.getVersion().getProtocol(), legacyTranslate(versionName)),
+                version,
                 new ServerPing.Players(playerCount, maxPlayers, genSampleList()),
                 og.getDescriptionComponent(),
                 og.getFavicon().orElse(null),
@@ -51,7 +59,7 @@ public class ProxyPingListener implements Reloadable {
         try {
             playerList = plugin.getConfig().node("custom-query", "query").getList(String.class);
             versionName = plugin.getConfig().node("custom-query", "protocol-message").getString();
-            confMaxPlayers = plugin.getConfig().node("custom-query", "max-players").getInt();
+            confMaxPlayers = plugin.getConfig().node("custom-query", "max-players").getObject(Integer.class);
         } catch (Throwable t) {
             plugin.getLogger().atError().setCause(t).log("Failed to load config. Please check stacktrace for more info");
         }

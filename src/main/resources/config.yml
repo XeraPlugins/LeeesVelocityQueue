@@ -18,9 +18,10 @@ custom-query:
     - "&8Total in queue: &l%totalinqueue%"
     - "&8Max players on main server: &l%maxplayers%"
     - "&8Get a rank to receive priority queue at &chttps://shop.8b8t.me"
-  protocol-message: "&98b&78t &81.8.X to 26.X"
-  #-1 for +1 mode i.e 30/31 online
-  max-players: -1
+  #Leave empty to disable and use the server's actual version
+  protocol-message: ""
+  #-1 for +1 mode i.e 30/31 online, leave empty to disable and use the server's actual max players
+  max-players:
 tablist:
   header:
     - ""
