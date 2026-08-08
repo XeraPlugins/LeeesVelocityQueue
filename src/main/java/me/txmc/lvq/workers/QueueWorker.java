@@ -41,6 +41,7 @@ public class QueueWorker implements Runnable, Reloadable {
     @Override
     public void run() {
         try {
+            if (plugin.getMainServer() == null || plugin.getQueueServer() == null) return;
             processQueue(prioQueue, prioFooter);
             processQueue(normalQueue, normalFooter);
             resendPlayersInQueueServer();

@@ -15,16 +15,15 @@ public class PreConnectListener implements Reloadable {
     private final Main plugin;
     private final PlayerQueue normalQueue;
     private final PlayerQueue prioQueue;
-    private final RegisteredServer mainServer;
     private String serverFullMessage;
     private String commandsBlockedMessage;
     private String serverSwitchBlockedMessage;
+    private boolean unconfiguredLogged;
 
     public PreConnectListener(Main plugin) {
         this.plugin = plugin;
         normalQueue = plugin.getNormalQueue();
         prioQueue = plugin.getPrioQueue();
-        mainServer = plugin.getMainServer();
         reloadConfig();
     }
 
@@ -33,9 +32,12 @@ public class PreConnectListener implements Reloadable {
         Player player = event.getPlayer();
         RegisteredServer server = event.getOriginalServer();
         if (player.hasPermission("lvq.bypass")) return;
+        RegisteredServer mainServer = plugin.getMainServer();
+        RegisteredServer queueServer = plugin.getQueueServer();
+        if (!isConfigured(mainServer, queueServer)) return;
         boolean inQueue = prioQueue.isInQueue(player.getUniqueId()) || normalQueue.isInQueue(player.getUniqueId());
         String targetName = server.getServerInfo().getName();
-        String queueName = plugin.getQueueServer().getServerInfo().getName();
+        String queueName = queueServer.getServerInfo().getName();
         if (inQueue) {
             boolean advancingToMain = targetName.equals(mainServer.getServerInfo().getName())
                     && plugin.getQueueWorker().isPendingTransfer(player.getUniqueId());
@@ -46,13 +48,22 @@ public class PreConnectListener implements Reloadable {
             return;
         }
         if (targetName.equals(mainServer.getServerInfo().getName()) && (plugin.isAlwaysQueue() || !plugin.doesServerHaveSlot())) {
-            if (isOnQueueServer(player)) return;
+            if (isOnQueueServer(player, queueServer)) return;
             sendMessage(player, serverFullMessage);
             if (player.hasPermission("lvq.priority")) {
                 prioQueue.addToQueue(player.getUniqueId());
             } else normalQueue.addToQueue(player.getUniqueId());
-            event.setResult(ServerPreConnectEvent.ServerResult.allowed(plugin.getQueueServer()));
+            event.setResult(ServerPreConnectEvent.ServerResult.allowed(queueServer));
         }
+    }
+
+    private boolean isConfigured(RegisteredServer mainServer, RegisteredServer queueServer) {
+        if (mainServer != null && queueServer != null) return true;
+        if (!unconfiguredLogged) {
+            plugin.getLogger().atWarn().log("Queue handling disabled: ensure the main-server and queue-server names in config.yml match servers registered in velocity.toml");
+            unconfiguredLogged = true;
+        }
+        return false;
     }
 
     @Subscribe
@@ -65,10 +76,10 @@ public class PreConnectListener implements Reloadable {
         }
     }
 
-    private boolean isOnQueueServer(Player player) {
+    private boolean isOnQueueServer(Player player, RegisteredServer queueServer) {
         return player.getCurrentServer()
                 .map(connection -> connection.getServerInfo().getName()
-                        .equals(plugin.getQueueServer().getServerInfo().getName()))
+                        .equals(queueServer.getServerInfo().getName()))
                 .orElse(false);
     }
 
