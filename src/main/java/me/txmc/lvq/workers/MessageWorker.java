@@ -21,7 +21,9 @@ public class MessageWorker implements Runnable, Reloadable {
     private String queuePositionMessage;
     private boolean queuePositionChatEnabled;
     private String queuePositionHotbar;
+    private boolean queuePositionHotbarEnabled;
     private String queuePositionTitle;
+    private boolean queuePositionTitleEnabled;
 
     public MessageWorker(Main plugin) {
         this.plugin = plugin;
@@ -56,10 +58,10 @@ public class MessageWorker implements Runnable, Reloadable {
             position = normalQueue.getQueuePosition(player.getUniqueId());
         }
         if (position < 0) return;
-        if (queuePositionHotbar != null && !queuePositionHotbar.isEmpty()) {
+        if (queuePositionHotbarEnabled && queuePositionHotbar != null && !queuePositionHotbar.isEmpty()) {
             player.sendActionBar(translateChars(String.format(queuePositionHotbar, position)));
         }
-        if (queuePositionTitle != null && !queuePositionTitle.isEmpty()) {
+        if (queuePositionTitleEnabled && queuePositionTitle != null && !queuePositionTitle.isEmpty()) {
             Title title = Title.title(
                     translateChars(String.format(queuePositionTitle, position)),
                     translateChars(""),
@@ -81,6 +83,8 @@ public class MessageWorker implements Runnable, Reloadable {
         queuePositionMessage = plugin.getConfig().node("messages", "queue-position").getString();
         queuePositionChatEnabled = plugin.getConfig().node("messages", "queue-position-chat-enabled").getBoolean(true);
         queuePositionHotbar = plugin.getConfig().node("messages", "queue-position-hotbar").getString("");
+        queuePositionHotbarEnabled = plugin.getConfig().node("messages", "queue-position-hotbar-enabled").getBoolean(true);
         queuePositionTitle = plugin.getConfig().node("messages", "queue-position-title").getString("");
+        queuePositionTitleEnabled = plugin.getConfig().node("messages", "queue-position-title-enabled").getBoolean(false);
     }
 }
