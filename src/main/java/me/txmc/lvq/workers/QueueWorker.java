@@ -67,17 +67,22 @@ public class QueueWorker implements Runnable, Reloadable {
     private void processQueue(PlayerQueue queue, TextComponent footer) {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
         for (UUID uuid : queue.getUUIDsInQueue()) {
-            Player player = plugin.getServer().getPlayer(uuid).orElse(null);
-            if (player == null || !player.isActive()) {
+            try {
+                Player player = plugin.getServer().getPlayer(uuid).orElse(null);
+                if (player == null || !player.isActive()) {
+                    queue.removeFromQueue(uuid);
+                    cleanupPlayer(uuid);
+                    continue;
+                }
+                int queuePos = queue.getQueuePosition(uuid);
+                player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
+                if (isOnJoinGrace(uuid)) continue;
+                if (queuePos != 1 || !serverHasSlot || pendingTransfers.contains(uuid) || isOnRetryCooldown(uuid)) continue;
+                serverHasSlot = advanceToMainServer(player, queue, serverHasSlot);
+            } catch (Throwable t) {
                 queue.removeFromQueue(uuid);
                 cleanupPlayer(uuid);
-                continue;
             }
-            int queuePos = queue.getQueuePosition(uuid);
-            player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
-            if (isOnJoinGrace(uuid)) continue;
-            if (queuePos != 1 || !serverHasSlot || pendingTransfers.contains(uuid) || isOnRetryCooldown(uuid)) continue;
-            serverHasSlot = advanceToMainServer(player, queue, serverHasSlot);
         }
     }
 
@@ -94,24 +99,33 @@ public class QueueWorker implements Runnable, Reloadable {
     private void resendPlayersInQueueServer() {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
         for (Player player : plugin.getQueueServer().getPlayersConnected()) {
-            if (player.hasPermission("lvq.bypass")) continue;
-            UUID uuid = player.getUniqueId();
-            if (pendingTransfers.contains(uuid)) continue;
-            if (prioQueue.isInQueue(uuid) || normalQueue.isInQueue(uuid)) continue;
-            if (player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getMainServer().getServerInfo().getName())).orElse(false)) continue;
-            if (!serverHasSlot) {
-                sendMessage(player, serverFullMessage);
-                queuePlayer(player);
-                continue;
+            try {
+                if (player.hasPermission("lvq.bypass")) continue;
+                UUID uuid = player.getUniqueId();
+                if (pendingTransfers.contains(uuid)) continue;
+                if (prioQueue.isInQueue(uuid) || normalQueue.isInQueue(uuid)) continue;
+                if (player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getMainServer().getServerInfo().getName())).orElse(false)) continue;
+                if (!serverHasSlot) {
+                    sendMessage(player, serverFullMessage);
+                    queuePlayer(player);
+                    continue;
+                }
+                if (isOnRetryCooldown(uuid)) continue;
+                if (isOnJoinGrace(uuid)) continue;
+                serverHasSlot = advanceToMainServer(player, null, serverHasSlot);
+            } catch (Throwable t) {
+                cleanupPlayer(player.getUniqueId());
             }
-            if (isOnRetryCooldown(uuid)) continue;
-            if (isOnJoinGrace(uuid)) continue;
-            serverHasSlot = advanceToMainServer(player, null, serverHasSlot);
         }
     }
 
     private boolean advanceToMainServer(Player player, PlayerQueue queue, boolean serverHasSlot) {
         UUID uuid = player.getUniqueId();
+        if (!player.isActive()) {
+            if (queue != null) queue.removeFromQueue(uuid);
+            cleanupPlayer(uuid);
+            return serverHasSlot;
+        }
         lastAttempt.put(uuid, System.currentTimeMillis());
         sendMessage(player, queueEndMessage);
         pendingTransfers.add(uuid);
