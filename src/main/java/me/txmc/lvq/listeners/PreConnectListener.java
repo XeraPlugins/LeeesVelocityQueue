@@ -2,6 +2,7 @@ package me.txmc.lvq.listeners;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
+import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -49,12 +50,22 @@ public class PreConnectListener implements Reloadable {
         }
         if (targetName.equals(mainServer.getServerInfo().getName()) && (plugin.isAlwaysQueue() || !plugin.doesServerHaveSlot())) {
             if (isOnQueueServer(player, queueServer)) return;
-            sendMessage(player, serverFullMessage);
             if (player.hasPermission("lvq.priority")) {
                 prioQueue.addToQueue(player.getUniqueId());
             } else normalQueue.addToQueue(player.getUniqueId());
             event.setResult(ServerPreConnectEvent.ServerResult.allowed(queueServer));
         }
+    }
+
+    @Subscribe
+    public void onConnected(ServerConnectedEvent event) {
+        Player player = event.getPlayer();
+        if (player.hasPermission("lvq.bypass")) return;
+        RegisteredServer queueServer = plugin.getQueueServer();
+        if (queueServer == null) return;
+        if (!event.getServer().getServerInfo().getName().equals(queueServer.getServerInfo().getName())) return;
+        boolean inQueue = prioQueue.isInQueue(player.getUniqueId()) || normalQueue.isInQueue(player.getUniqueId());
+        if (inQueue) sendMessage(player, serverFullMessage);
     }
 
     private boolean isConfigured(RegisteredServer mainServer, RegisteredServer queueServer) {
