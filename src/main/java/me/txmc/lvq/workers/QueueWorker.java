@@ -43,6 +43,10 @@ public class QueueWorker implements Runnable, Reloadable {
         }
     }
 
+    public boolean isPendingTransfer(Player player) {
+        return pendingTransfers.contains(player);
+    }
+
     private void processQueue(PlayerQueue queue, TextComponent footer) {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
         for (Player player : queue.getPlayersInQueue()) {

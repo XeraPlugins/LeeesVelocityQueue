@@ -43,6 +43,7 @@ public class Main implements Reloadable{
     @Getter private RegisteredServer queueServer;
     @Getter private int maxSlots;
     @Getter private boolean alwaysQueue;
+    @Getter private QueueWorker queueWorker;
     @Getter private final List<Reloadable> reloadables;
 
     private ScheduledTask queueNotifyTask;
@@ -73,7 +74,8 @@ public class Main implements Reloadable{
         server.getEventManager().register(this, new DisconnectListener(this));
         server.getEventManager().register(this, registerReloadable(new ProxyPingListener(this)));
         server.getCommandManager().register(server.getCommandManager().metaBuilder("lvq").plugin(this).build(), new LvqCommand(this));
-        queueNotifyTask = server.getScheduler().buildTask(this, (Runnable) registerReloadable(new QueueWorker(this))).repeat(Duration.ofSeconds(1)).schedule();
+        queueWorker = new QueueWorker(this);
+        queueNotifyTask = server.getScheduler().buildTask(this, queueWorker).repeat(Duration.ofSeconds(1)).schedule();
         messageTask = server.getScheduler().buildTask(this, (Runnable) registerReloadable(new MessageWorker(this))).repeat(Duration.ofSeconds(messageInterval)).schedule();
     }
     @Subscribe

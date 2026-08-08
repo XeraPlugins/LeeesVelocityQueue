@@ -6,6 +6,8 @@ always-queue: false #When true, players will always be queued even when the main
 messages:
   interval: 10 #In seconds
   server-full: "&r&68b8t is full"
+  commands-blocked: "&cYou cannot use commands while in the queue"
+  server-switch-blocked: "&cYou can only be on the queue server while in the queue"
   queue-position: "&6Position in queue: &l%d"
   queue-end: "&6Connecting to 8b8t..."
 #this shows the queue size when you hover over the ping on the server list
