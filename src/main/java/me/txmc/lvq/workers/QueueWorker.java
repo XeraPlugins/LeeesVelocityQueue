@@ -66,6 +66,7 @@ public class QueueWorker implements Runnable, Reloadable {
 
     private void processQueue(PlayerQueue queue, TextComponent footer) {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
+        boolean advancedThisTick = false;
         for (UUID uuid : queue.getUUIDsInQueue()) {
             try {
                 Player player = plugin.getServer().getPlayer(uuid).orElse(null);
@@ -78,6 +79,8 @@ public class QueueWorker implements Runnable, Reloadable {
                 player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
                 if (isOnJoinGrace(uuid)) continue;
                 if (queuePos != 1 || !serverHasSlot || pendingTransfers.contains(uuid) || isOnRetryCooldown(uuid)) continue;
+                if (advancedThisTick) continue;
+                advancedThisTick = true;
                 serverHasSlot = advanceToMainServer(player, queue, serverHasSlot);
             } catch (Throwable t) {
                 queue.removeFromQueue(uuid);
@@ -99,6 +102,7 @@ public class QueueWorker implements Runnable, Reloadable {
 
     private void resendPlayersInQueueServer() {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
+        boolean advancedThisTick = false;
         for (Player player : plugin.getQueueServer().getPlayersConnected()) {
             try {
                 if (player.hasPermission("lvq.bypass")) continue;
@@ -113,6 +117,8 @@ public class QueueWorker implements Runnable, Reloadable {
                 }
                 if (isOnRetryCooldown(uuid)) continue;
                 if (isOnJoinGrace(uuid)) continue;
+                if (advancedThisTick) continue;
+                advancedThisTick = true;
                 serverHasSlot = advanceToMainServer(player, null, serverHasSlot);
             } catch (Throwable t) {
                 cleanupPlayer(player.getUniqueId());

@@ -10,6 +10,9 @@ import me.txmc.lvq.Main;
 import me.txmc.lvq.PlayerQueue;
 import me.txmc.lvq.Reloadable;
 
+import java.time.Duration;
+import java.util.UUID;
+
 import static me.txmc.lvq.util.MessageUtil.sendMessage;
 
 public class PreConnectListener implements Reloadable {
@@ -65,7 +68,15 @@ public class PreConnectListener implements Reloadable {
         if (queueServer == null) return;
         if (!event.getServer().getServerInfo().getName().equals(queueServer.getServerInfo().getName())) return;
         boolean inQueue = prioQueue.isInQueue(player.getUniqueId()) || normalQueue.isInQueue(player.getUniqueId());
-        if (inQueue) sendMessage(player, serverFullMessage);
+        if (!inQueue) return;
+        plugin.getServer().getScheduler().buildTask(plugin, () -> {
+            UUID uuid = player.getUniqueId();
+            if (!player.isActive()) return;
+            if (!prioQueue.isInQueue(uuid) && !normalQueue.isInQueue(uuid)) return;
+            if (!event.getServer().getServerInfo().getName().equals(plugin.getQueueServer().getServerInfo().getName())) return;
+            if (!player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getQueueServer().getServerInfo().getName())).orElse(false)) return;
+            sendMessage(player, serverFullMessage);
+        }).delay(Duration.ofMillis(1000)).schedule();
     }
 
     private boolean isConfigured(RegisteredServer mainServer, RegisteredServer queueServer) {
