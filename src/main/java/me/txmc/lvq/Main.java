@@ -117,9 +117,14 @@ public class Main implements Reloadable{
         messageInterval = getConfig().node("messages", "interval").getInt();
     }
     public boolean doesServerHaveSlot() {
-        ServerPing ping = getMainServer().ping().join();
-        ServerPing.Players players = ping.getPlayers().orElse(null);
-        if (players == null) return false;
-        return players.getOnline() < maxSlots;
+        try {
+            ServerPing ping = getMainServer().ping().join();
+            ServerPing.Players players = ping.getPlayers().orElse(null);
+            if (players == null) return false;
+            return players.getOnline() < maxSlots;
+        } catch (Throwable t) {
+            getLogger().atWarn().setCause(t).log("Failed to ping the main server to check for an available slot");
+            return false;
+        }
     }
 }

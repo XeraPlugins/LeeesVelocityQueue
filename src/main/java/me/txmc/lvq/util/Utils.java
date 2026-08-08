@@ -6,6 +6,11 @@ public class Utils {
         long minutes = ms / 60000L % 60L;
         long hours = ms / 3600000L % 24L;
         long days = ms / 86400000L;
-        return String.format("%dd %02dh %02dm %02ds", days, hours, minutes, seconds);
+        StringBuilder sb = new StringBuilder();
+        if (days > 0) sb.append(days).append("D ");
+        if (hours > 0) sb.append(hours).append("H ");
+        if (minutes > 0) sb.append(minutes).append("m ");
+        if (seconds > 0 && sb.length() == 0) sb.append(seconds).append("s");
+        return sb.length() == 0 ? "now" : sb.toString().trim();
     }
 }

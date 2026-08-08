@@ -30,25 +30,30 @@ public class QueueWorker implements Runnable, Reloadable {
 
     @Override
     public void run() {
-        boolean serverHasSlot = plugin.doesServerHaveSlot();
-        for (Player player : prioQueue.getPlayersInQueue()) {
-            int queuePos = prioQueue.getQueuePosition(player);
-            player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, prioQueue), prioFooter);
-            if (serverHasSlot && queuePos == 1) {
-                sendMessage(player, queueEndMessage);
-                player.createConnectionRequest(plugin.getMainServer()).connect().join();
-                prioQueue.removeFromQueue(player);
-                serverHasSlot = plugin.doesServerHaveSlot();
-                break;
-            }
+        try {
+            processQueue(prioQueue, prioFooter);
+            processQueue(normalQueue, normalFooter);
+        } catch (Throwable t) {
+            plugin.getLogger().atWarn().setCause(t).log("Queue worker encountered an unexpected error, continuing next tick");
         }
-        for (Player player : normalQueue.getPlayersInQueue()) {
-            int queuePos = normalQueue.getQueuePosition(player);
-            player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, normalQueue), normalFooter);
-            if (serverHasSlot && queuePos == 1) {
+    }
+
+    private void processQueue(PlayerQueue queue, TextComponent footer) {
+        boolean serverHasSlot = plugin.doesServerHaveSlot();
+        for (Player player : queue.getPlayersInQueue()) {
+            int queuePos = queue.getQueuePosition(player);
+            player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
+            if (queuePos == 1) {
+                if (!serverHasSlot) continue;
                 sendMessage(player, queueEndMessage);
-                player.createConnectionRequest(plugin.getMainServer()).connect().join();
-                normalQueue.removeFromQueue(player);
+                queue.removeFromQueue(player);
+                try {
+                    player.createConnectionRequest(plugin.getMainServer()).connect().join();
+                } catch (Throwable t) {
+                    plugin.getLogger().atWarn().setCause(t).log("Failed to connect {} to the main server, requeueing them", player.getUsername());
+                    queue.addToQueue(player);
+                }
+                serverHasSlot = plugin.doesServerHaveSlot();
                 break;
             }
         }
@@ -69,7 +74,7 @@ public class QueueWorker implements Runnable, Reloadable {
     private TextComponent parseHeader(int posInQueue, PlayerQueue queue) {
         String raw = String.join("\n", tabHeader);
         raw = raw.replace("%position%", String.valueOf(posInQueue));
-        raw = raw.replace("%wait%", Utils.getFormattedInterval(Math.max(0L, ((posInQueue*5L - plugin.getMaxSlots()) * 60L) * 1000)));
+        raw = raw.replace("%wait%", Utils.getFormattedInterval(posInQueue * 5L * 60L * 1000L));
         return translateChars(raw);
     }
     private TextComponent parseFooter(List<String> input) {
