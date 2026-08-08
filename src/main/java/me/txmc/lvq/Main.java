@@ -28,6 +28,9 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Plugin(id = "leeesvelocityqueue",
         name = "LeeesVelocityQueue",
@@ -46,6 +49,7 @@ public class Main implements Reloadable{
     @Getter private QueueWorker queueWorker;
     @Getter private final List<Reloadable> reloadables;
 
+    @Getter private final Set<UUID> serverFullSent = ConcurrentHashMap.newKeySet();
     private ScheduledTask queueNotifyTask;
     private ScheduledTask messageTask;
     private File configFile;

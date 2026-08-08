@@ -24,6 +24,7 @@ public class DisconnectListener {
 
         prioQueue.removeFromQueue(uuid);
         normalQueue.removeFromQueue(uuid);
+        plugin.getServerFullSent().remove(uuid);
         plugin.getQueueWorker().cleanupPlayer(uuid);
     }
 }
