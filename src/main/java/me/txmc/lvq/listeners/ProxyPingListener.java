@@ -59,7 +59,7 @@ public class ProxyPingListener implements Reloadable {
         try {
             playerList = plugin.getConfig().node("custom-query", "query").getList(String.class);
             versionName = plugin.getConfig().node("custom-query", "protocol-message").getString();
-            confMaxPlayers = plugin.getConfig().node("custom-query", "max-players").getObject(Integer.class);
+            confMaxPlayers = plugin.getConfig().node("custom-query", "max-players").get(Integer.class);
         } catch (Throwable t) {
             plugin.getLogger().atError().setCause(t).log("Failed to load config. Please check stacktrace for more info");
         }
