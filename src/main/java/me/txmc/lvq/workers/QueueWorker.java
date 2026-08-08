@@ -69,7 +69,7 @@ public class QueueWorker implements Runnable, Reloadable {
     private TextComponent parseHeader(int posInQueue, PlayerQueue queue) {
         String raw = String.join("\n", tabHeader);
         raw = raw.replace("%position%", String.valueOf(posInQueue));
-        raw = raw.replace("%wait%", Utils.getFormattedInterval(((posInQueue*5L - plugin.getMaxSlots()) * 60L) * 1000));
+        raw = raw.replace("%wait%", Utils.getFormattedInterval(Math.max(0L, ((posInQueue*5L - plugin.getMaxSlots()) * 60L) * 1000)));
         return translateChars(raw);
     }
     private TextComponent parseFooter(List<String> input) {
