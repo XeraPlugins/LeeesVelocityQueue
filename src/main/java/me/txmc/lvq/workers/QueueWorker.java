@@ -57,6 +57,10 @@ public class QueueWorker implements Runnable, Reloadable {
         return pendingTransfers.contains(uuid);
     }
 
+    public void requeuePlayer(Player player) {
+        queuePlayer(player);
+    }
+
     public void cleanupPlayer(UUID uuid) {
         pendingTransfers.remove(uuid);
         lastAttempt.remove(uuid);

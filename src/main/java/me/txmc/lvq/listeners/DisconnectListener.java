@@ -2,6 +2,9 @@ package me.txmc.lvq.listeners;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.player.KickedFromServerEvent;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.txmc.lvq.Main;
 import me.txmc.lvq.PlayerQueue;
 
@@ -26,5 +29,20 @@ public class DisconnectListener {
         normalQueue.removeFromQueue(uuid);
         plugin.getServerFullSent().remove(uuid);
         plugin.getQueueWorker().cleanupPlayer(uuid);
+    }
+
+    @Subscribe
+    public void onKick(KickedFromServerEvent event) {
+        if (!plugin.isRequeueOnMainKick()) return;
+        Player player = event.getPlayer();
+        if (player.hasPermission("lvq.bypass")) return;
+        RegisteredServer mainServer = plugin.getMainServer();
+        if (mainServer == null) return;
+        if (!event.getServer().getServerInfo().getName().equals(mainServer.getServerInfo().getName())) return;
+        if (event.kickedDuringServerConnect()) return;
+        UUID uuid = player.getUniqueId();
+        if (prioQueue.isInQueue(uuid) || normalQueue.isInQueue(uuid)) return;
+        plugin.getQueueWorker().requeuePlayer(player);
+        plugin.getLogger().atInfo().log("{} was kicked from the main server, re-adding them to the queue", player.getUsername());
     }
 }
