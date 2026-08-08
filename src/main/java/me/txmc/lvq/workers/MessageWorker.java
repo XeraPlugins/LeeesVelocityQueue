@@ -12,9 +12,9 @@ import static me.txmc.lvq.util.MessageUtil.sendMessage;
 import static me.txmc.lvq.util.MessageUtil.translateChars;
 
 public class MessageWorker implements Runnable, Reloadable {
-    private static final Duration TITLE_FADE_IN = Duration.ofMillis(200L);
-    private static final Duration TITLE_STAY = Duration.ofMillis(1200L);
-    private static final Duration TITLE_FADE_OUT = Duration.ofMillis(400L);
+    private static final Duration TITLE_FADE_IN = Duration.ZERO;
+    private static final Duration TITLE_STAY = Duration.ofMillis(5000L);
+    private static final Duration TITLE_FADE_OUT = Duration.ZERO;
     private final Main plugin;
     private final PlayerQueue prioQueue;
     private final PlayerQueue normalQueue;
