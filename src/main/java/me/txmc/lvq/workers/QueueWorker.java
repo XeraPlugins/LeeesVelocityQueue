@@ -29,6 +29,7 @@ public class QueueWorker implements Runnable, Reloadable {
     private final Map<UUID, Long> joinQueue = new ConcurrentHashMap<>();
     private long queueGraceMs;
     private String queueEndMessage;
+    private String serverFullMessage;
     private List<String> tabHeader;
     private TextComponent prioFooter;
     private TextComponent normalFooter;
@@ -99,6 +100,7 @@ public class QueueWorker implements Runnable, Reloadable {
             if (prioQueue.isInQueue(uuid) || normalQueue.isInQueue(uuid)) continue;
             if (player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getMainServer().getServerInfo().getName())).orElse(false)) continue;
             if (!serverHasSlot) {
+                sendMessage(player, serverFullMessage);
                 queuePlayer(player);
                 continue;
             }
@@ -184,6 +186,7 @@ public class QueueWorker implements Runnable, Reloadable {
         try {
             queueGraceMs = plugin.getConfig().node("queue-grace-ms").getLong(5000L);
             queueEndMessage = plugin.getConfig().node("messages", "queue-end").getString();
+            serverFullMessage = plugin.getConfig().node("messages", "server-full").getString();
             tabHeader = plugin.getConfig().node("tablist", "header").getList(String.class);
             prioFooter = parseFooter(plugin.getConfig().node("tablist", "priority-queue-footer").getList(String.class));
             normalFooter = parseFooter(plugin.getConfig().node("tablist", "normal-queue-footer").getList(String.class));
