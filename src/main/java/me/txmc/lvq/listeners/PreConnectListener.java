@@ -30,7 +30,7 @@ public class PreConnectListener implements Reloadable {
         Player player = event.getPlayer();
         RegisteredServer server = event.getOriginalServer();
         if (player.hasPermission("lvq.bypass")) return;
-        if (server.getServerInfo().getName().equals(mainServer.getServerInfo().getName()) && !plugin.doesServerHaveSlot()) {
+        if (server.getServerInfo().getName().equals(mainServer.getServerInfo().getName()) && (plugin.isAlwaysQueue() || !plugin.doesServerHaveSlot())) {
             sendMessage(player, serverFullMessasge);
             if (player.hasPermission("lvq.priority")) {
                 prioQueue.addToQueue(player);

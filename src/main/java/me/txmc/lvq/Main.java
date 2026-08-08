@@ -42,6 +42,7 @@ public class Main implements Reloadable{
     @Getter private RegisteredServer mainServer;
     @Getter private RegisteredServer queueServer;
     @Getter private int maxSlots;
+    @Getter private boolean alwaysQueue;
     @Getter private final List<Reloadable> reloadables;
 
     private ScheduledTask queueNotifyTask;
@@ -112,6 +113,7 @@ public class Main implements Reloadable{
         if (mainServer == null) getLogger().atError().log("{} is not a valid server, please ensure that the server name in the lvq configuration file matches the one in velocity.toml", mainServerName);
         if (queueServer == null) getLogger().atError().log("{} is not a valid server, please ensure that the server name in the lvq configuration file matches the one in velocity.toml", queueServerName);
         maxSlots = getConfig().node("main-server-slots").getInt();
+        alwaysQueue = getConfig().node("always-queue").getBoolean(false);
         messageInterval = getConfig().node("messages", "interval").getInt();
     }
     public boolean doesServerHaveSlot() {
