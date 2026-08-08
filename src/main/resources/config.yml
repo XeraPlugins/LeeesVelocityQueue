@@ -2,7 +2,7 @@
 queue-server: "queue"
 main-server: "8b8t"
 main-server-slots: 400
-always-queue: false #When true, players will always be queued even when the main server is not full
+always-queue: true #When true, players will always be queued even when the main server is not full
 messages:
   interval: 10 #In seconds
   server-full: "&r&68b8t is full"
