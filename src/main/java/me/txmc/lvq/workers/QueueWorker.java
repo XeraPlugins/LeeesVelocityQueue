@@ -67,7 +67,11 @@ public class QueueWorker implements Runnable, Reloadable {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
         for (UUID uuid : queue.getUUIDsInQueue()) {
             Player player = plugin.getServer().getPlayer(uuid).orElse(null);
-            if (player == null) continue;
+            if (player == null || !player.isActive()) {
+                queue.removeFromQueue(uuid);
+                cleanupPlayer(uuid);
+                continue;
+            }
             int queuePos = queue.getQueuePosition(uuid);
             player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
             if (isOnJoinGrace(uuid)) continue;
@@ -145,6 +149,11 @@ public class QueueWorker implements Runnable, Reloadable {
 
     private void handleFailedTransfer(Player player, PlayerQueue queue) {
         UUID uuid = player.getUniqueId();
+        if (!player.isActive()) {
+            if (queue != null) queue.removeFromQueue(uuid);
+            cleanupPlayer(uuid);
+            return;
+        }
         int attempts = retryCount.merge(uuid, 1, Integer::sum);
         if (attempts < MAX_RETRIES) return;
         retryCount.remove(uuid);
