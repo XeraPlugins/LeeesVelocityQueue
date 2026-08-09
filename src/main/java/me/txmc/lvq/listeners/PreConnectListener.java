@@ -21,7 +21,6 @@ public class PreConnectListener implements Reloadable {
     private final PlayerQueue prioQueue;
     private String serverFullMessage;
     private String commandsBlockedMessage;
-    private String serverSwitchBlockedMessage;
     private boolean unconfiguredLogged;
 
     public PreConnectListener(Main plugin) {
@@ -46,7 +45,6 @@ public class PreConnectListener implements Reloadable {
             boolean advancingToMain = targetName.equals(mainServer.getServerInfo().getName())
                     && plugin.getQueueWorker().isPendingTransfer(player.getUniqueId());
             if (!targetName.equals(queueName) && !advancingToMain) {
-                sendMessage(player, serverSwitchBlockedMessage);
                 event.setResult(ServerPreConnectEvent.ServerResult.denied());
             }
             return;
@@ -111,7 +109,6 @@ public class PreConnectListener implements Reloadable {
         try {
             serverFullMessage = plugin.getConfig().node("messages", "server-full").getString();
             commandsBlockedMessage = plugin.getConfig().node("messages", "commands-blocked").getString("&cYou cannot use commands while in the queue");
-            serverSwitchBlockedMessage = plugin.getConfig().node("messages", "server-switch-blocked").getString("&cYou can only be on the queue server while in the queue");
         } catch (Throwable t) {
             plugin.getLogger().atError().setCause(t).log("Failed to load config. Please check stacktrace for more info");
         }

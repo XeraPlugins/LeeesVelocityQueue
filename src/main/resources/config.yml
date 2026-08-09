@@ -1,4 +1,4 @@
-#LeeesVelocityQueue Version: 1.2.0 RELEASE
+#LeeesVelocityQueue Version: 1.2.1 RELEASE
 queue-server: "queue"
 main-server: "8b8t"
 main-server-slots: 400
@@ -15,7 +15,6 @@ messages:
   queue-position-title-enabled: false #Whether the title position message is shown
   server-full: "&r&68b8t is full"
   commands-blocked: "&cYou cannot use commands while in the queue"
-  server-switch-blocked: "&cYou can only be on the queue server while in the queue"
   queue-end: "&6Connecting to 8b8t..."
 #this shows the queue size when you hover over the ping on the server list
 custom-query:
