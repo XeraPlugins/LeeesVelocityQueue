@@ -20,7 +20,6 @@ public class PreConnectListener implements Reloadable {
     private final PlayerQueue normalQueue;
     private final PlayerQueue prioQueue;
     private String serverFullMessage;
-    private String commandsBlockedMessage;
     private boolean unconfiguredLogged;
 
     public PreConnectListener(Main plugin) {
@@ -92,7 +91,6 @@ public class PreConnectListener implements Reloadable {
         if (!(event.getCommandSource() instanceof Player player)) return;
         if (player.hasPermission("lvq.bypass")) return;
         if (prioQueue.isInQueue(player.getUniqueId()) || normalQueue.isInQueue(player.getUniqueId())) {
-            sendMessage(player, commandsBlockedMessage);
             event.setResult(CommandExecuteEvent.CommandResult.denied());
         }
     }
@@ -108,7 +106,6 @@ public class PreConnectListener implements Reloadable {
     public void reloadConfig() {
         try {
             serverFullMessage = plugin.getConfig().node("messages", "server-full").getString();
-            commandsBlockedMessage = plugin.getConfig().node("messages", "commands-blocked").getString("&cYou cannot use commands while in the queue");
         } catch (Throwable t) {
             plugin.getLogger().atError().setCause(t).log("Failed to load config. Please check stacktrace for more info");
         }

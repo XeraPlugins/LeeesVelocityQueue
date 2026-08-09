@@ -14,7 +14,6 @@ messages:
   queue-position-title: "&6Position in queue: &l%d" #Shown as a title on the middle of the screen
   queue-position-title-enabled: false #Whether the title position message is shown
   server-full: "&r&68b8t is full"
-  commands-blocked: "&cYou cannot use commands while in the queue"
   queue-end: "&6Connecting to 8b8t..."
 #this shows the queue size when you hover over the ping on the server list
 custom-query:
