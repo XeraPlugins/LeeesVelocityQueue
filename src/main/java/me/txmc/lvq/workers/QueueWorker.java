@@ -2,6 +2,7 @@ package me.txmc.lvq.workers;
 
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import me.txmc.lvq.Main;
 import me.txmc.lvq.PlayerQueue;
 import me.txmc.lvq.Reloadable;
@@ -59,6 +60,13 @@ public class QueueWorker implements Runnable, Reloadable {
 
     public void requeuePlayer(Player player) {
         queuePlayer(player);
+        if (!isOnQueueServer(player)) {
+            plugin.getServer().getScheduler().buildTask(plugin, () -> {
+                if (player.isActive() && !isOnQueueServer(player)) {
+                    player.createConnectionRequest(plugin.getQueueServer()).connect();
+                }
+            }).schedule();
+        }
     }
 
     public void cleanupPlayer(UUID uuid) {
@@ -79,6 +87,11 @@ public class QueueWorker implements Runnable, Reloadable {
                     cleanupPlayer(uuid);
                     continue;
                 }
+                if (!isOnQueueServer(player)) {
+                    queue.removeFromQueue(uuid);
+                    cleanupPlayer(uuid);
+                    continue;
+                }
                 int queuePos = queue.getQueuePosition(uuid);
                 player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
                 if (isOnJoinGrace(uuid)) continue;
@@ -92,6 +105,14 @@ public class QueueWorker implements Runnable, Reloadable {
             }
         }
         queue.rebuild();
+    }
+
+    private boolean isOnQueueServer(Player player) {
+        RegisteredServer queueServer = plugin.getQueueServer();
+        if (queueServer == null) return false;
+        return player.getCurrentServer()
+                .map(con -> con.getServerInfo().getName().equals(queueServer.getServerInfo().getName()))
+                .orElse(false);
     }
 
     private boolean isOnJoinGrace(UUID uuid) {

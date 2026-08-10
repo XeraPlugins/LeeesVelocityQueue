@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Plugin(id = "leeesvelocityqueue",
         name = "LeeesVelocityQueue",
-        version = "1.2.1-RELEASE", description = "A 2b2t like queue plugin for Velocity",
+        version = "1.2.2-RELEASE", description = "A 2b2t like queue plugin for Velocity",
         authors = {"254n_m", "Leeewith3Es"})
 public class Main implements Reloadable{
     @Getter private final ProxyServer server;
