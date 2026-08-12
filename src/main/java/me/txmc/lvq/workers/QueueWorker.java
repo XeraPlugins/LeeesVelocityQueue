@@ -149,7 +149,10 @@ public class QueueWorker implements Runnable, Reloadable {
                 if (prioQueue.isInQueue(uuid) || normalQueue.isInQueue(uuid)) continue;
                 if (player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getMainServer().getServerInfo().getName())).orElse(false)) continue;
                 if (plugin.isAlwaysQueue() || !serverHasSlot) {
-                    sendMessage(player, serverFullMessage);
+                    if (!plugin.getServerFullSent().contains(uuid)) {
+                        sendMessage(player, serverFullMessage);
+                        plugin.getServerFullSent().add(uuid);
+                    }
                     queuePlayer(player);
                     continue;
                 }

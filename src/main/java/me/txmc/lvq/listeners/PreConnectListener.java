@@ -72,6 +72,7 @@ public class PreConnectListener implements Reloadable {
             if (!prioQueue.isInQueue(uuid) && !normalQueue.isInQueue(uuid)) return;
             if (!event.getServer().getServerInfo().getName().equals(plugin.getQueueServer().getServerInfo().getName())) return;
             if (!player.getCurrentServer().map(con -> con.getServerInfo().getName().equals(plugin.getQueueServer().getServerInfo().getName())).orElse(false)) return;
+            if (plugin.getServerFullSent().contains(uuid)) return;
             sendMessage(player, serverFullMessage);
             plugin.getServerFullSent().add(uuid);
         }).delay(Duration.ofMillis(500)).schedule();
