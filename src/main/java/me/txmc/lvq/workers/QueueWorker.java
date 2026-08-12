@@ -46,11 +46,24 @@ public class QueueWorker implements Runnable, Reloadable {
     public void run() {
         try {
             if (plugin.getMainServer() == null || plugin.getQueueServer() == null) return;
-            processQueue(prioQueue, prioFooter);
-            processQueue(normalQueue, normalFooter);
+            processQueue(prioQueue);
+            processQueue(normalQueue);
             resendPlayersInQueueServer();
         } catch (Throwable t) {
             plugin.getLogger().atWarn().setCause(t).log("Queue worker encountered an unexpected error, continuing next tick");
+        }
+    }
+
+    public void updateTablist(Player player) {
+        UUID uuid = player.getUniqueId();
+        try {
+            if (prioQueue.isInQueue(uuid)) {
+                player.sendPlayerListHeaderAndFooter(parseHeader(prioQueue.getQueuePosition(uuid), prioQueue), prioFooter);
+            } else if (normalQueue.isInQueue(uuid)) {
+                player.sendPlayerListHeaderAndFooter(parseHeader(normalQueue.getQueuePosition(uuid), normalQueue), normalFooter);
+            }
+        } catch (Throwable t) {
+            plugin.getLogger().atWarn().setCause(t).log("Failed to update tablist for {}", player.getUsername());
         }
     }
 
@@ -76,7 +89,7 @@ public class QueueWorker implements Runnable, Reloadable {
         joinQueue.remove(uuid);
     }
 
-    private void processQueue(PlayerQueue queue, TextComponent footer) {
+    private void processQueue(PlayerQueue queue) {
         boolean serverHasSlot = plugin.doesServerHaveSlot();
         boolean advancedThisTick = false;
         for (UUID uuid : queue.getUUIDsInQueue()) {
@@ -93,7 +106,7 @@ public class QueueWorker implements Runnable, Reloadable {
                     continue;
                 }
                 int queuePos = queue.getQueuePosition(uuid);
-                player.sendPlayerListHeaderAndFooter(parseHeader(queuePos, queue), footer);
+                updateTablist(player);
                 if (isOnJoinGrace(uuid)) continue;
                 if (queuePos != 1 || !serverHasSlot || pendingTransfers.contains(uuid) || isOnRetryCooldown(uuid)) continue;
                 if (advancedThisTick) continue;

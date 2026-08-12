@@ -73,9 +73,15 @@ public class MessageWorker implements Runnable, Reloadable {
 
     public void refreshAll() {
         prioQueue.getUUIDsInQueue().forEach(uuid ->
-                plugin.getServer().getPlayer(uuid).ifPresent(this::showPosition));
+                plugin.getServer().getPlayer(uuid).ifPresent(p -> {
+                    plugin.getQueueWorker().updateTablist(p);
+                    showPosition(p);
+                }));
         normalQueue.getUUIDsInQueue().forEach(uuid ->
-                plugin.getServer().getPlayer(uuid).ifPresent(this::showPosition));
+                plugin.getServer().getPlayer(uuid).ifPresent(p -> {
+                    plugin.getQueueWorker().updateTablist(p);
+                    showPosition(p);
+                }));
     }
 
     @Override
